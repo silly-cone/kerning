@@ -6,8 +6,12 @@ import Canvas from 'canvas'
 import fs from 'fs'
 import intersect from 'path-intersection'
 
-var text = process.argv[2]
+var string = process.argv[2]
 var font_path = process.argv[3]
+var image_path = "./image"
+if (!fs.existsSync(image_path)){
+    fs.mkdirSync(image_path);
+}
 
 var color_list = [
     [255, 0, 0],
@@ -29,6 +33,9 @@ function nextColor() {
     let color = color_list[cur_color++]
     console.log(color)
     return `rgb(${color[0]}, ${color[1]}, ${color[2]})`
+}
+function resetColor() {
+    cur_color = 0
 }
 
 function newPath() {
@@ -95,22 +102,25 @@ opentype.load(font_path, function(err, font) {
     if (err) {
         console.log('Font could not be loaded: ' + err);
     } else {
-        const path = font.getPath(text, 0, 72, 72);
-        const canvas = Canvas.createCanvas(300, 300);
-        const ctx = canvas.getContext("2d");
-        for (let subpath of splitPath(path)) {
-            console.log(subpath)
-            subpath.fill = nextColor()
-            subpath.draw(ctx)
-        }
-        for (let i = 0; i < color_list.length; i++) {
-            let color = color_list[i]
-            ctx.font='bold 20px serif'
-            ctx.fillStyle = `rgb(${color[0]}, ${color[1]}, ${color[2]})`
-            ctx.fillText(i.toString(), i*25, 150)
-            console.log(i.toString(), i*10, 90)
-        }
-        const buffer = canvas.toBuffer("image/png");
-        fs.writeFileSync("./image.png", buffer);
+        [...string].forEach((text) => {
+            resetColor()
+            const path = font.getPath(text, 0, 72, 72);
+            const canvas = Canvas.createCanvas(300, 300);
+            const ctx = canvas.getContext("2d");
+            for (let subpath of splitPath(path)) {
+                console.log(subpath)
+                subpath.fill = nextColor()
+                subpath.draw(ctx)
+            }
+            for (let i = 0; i < color_list.length; i++) {
+                let color = color_list[i]
+                ctx.font='bold 20px serif'
+                ctx.fillStyle = `rgb(${color[0]}, ${color[1]}, ${color[2]})`
+                ctx.fillText(i.toString(), i*25, 150)
+                console.log(i.toString(), i*10, 90)
+            }
+            const buffer = canvas.toBuffer("image/png");
+            fs.writeFileSync(`${image_path}/${text}.png`, buffer);
+        })
     }
 });
